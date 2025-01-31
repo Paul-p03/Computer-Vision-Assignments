@@ -1,1 +1,1 @@
-# Computer-Vision-Assignments
+# ComputerVisionAssignments
