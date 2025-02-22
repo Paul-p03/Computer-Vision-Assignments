@@ -62,7 +62,6 @@ def boxFilter(image_path, k): # Box filter algorithm
 def box_filter_command(image_path, k): #Box filter built in function
     image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     blurred_image = cv2.blur(image_cv2,(k,k))
-    
     return blurred_image
 
 def sobel_filter(image_path, k):
@@ -71,6 +70,12 @@ def sobel_filter(image_path, k):
     sobely = cv2.Sobel(image_cv2, cv2.CV_64F, 0, 1, k)
     sobelxy = cv2.magnitude(sobelx, sobely)
     return sobelxy
+
+def gaussian_Filter(image_path, k):
+    image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image_cv2 = cv2.GaussianBlur(image_cv2, (k, k), 0)
+    return image_cv2
+
 
 #Box filter algorithm
 add_image(bike_image, 1, 1, 200, 200, k=3)
@@ -85,4 +90,10 @@ add_image(cv2_blur, 2, 3, 200, 200)
 #cv2 sobel box filter 
 cv2_sobel = sobel_filter(bike_image, 5)
 add_image(cv2_sobel, 3, 3, 200, 200)
+
+#Gaussian blur filter
+cv2_Gaussian = gaussian_Filter(dog_image, 5)
+add_image(cv2_Gaussian, 3, 2, 200, 200)
+cv2_Gaussian = gaussian_Filter(dog_image, 3)
+add_image(cv2_Gaussian, 3, 1, 200, 200)
 root.mainloop()
