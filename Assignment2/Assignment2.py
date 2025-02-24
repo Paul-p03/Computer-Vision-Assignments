@@ -90,6 +90,22 @@ def sobel_filter_x_command(image_path):
 
     return empty_matrix
 
+#Sobel Y manual conversion
+def sobel_filter_y_command(image_path):
+    image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    kernel_matrix = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
+    copy_matrix = image_cv2
+    empty_matrix = np.zeros_like(copy_matrix)
+
+    width, height = image_cv2.shape #Stores width and height of image
+
+    for i in range(1, width - 1):
+        for j in range(1, height - 1):
+            sub_matrix = image_cv2[i-1:i+2, j-1:j+2] 
+            convolution = np.sum(kernel_matrix*sub_matrix)
+            empty_matrix[i][j] = convolution
+    return empty_matrix
+
 #Gaussian filter using cv2 function
 def gaussian_Filter(image_path, k):
     image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -116,6 +132,12 @@ sobelx = sobel_filter_x_command(dog_image)
 add_image(sobelx, 3, 0, 200, 200)
 sobelx = sobel_filter_x_command(bike_image)
 add_image(sobelx, 3, 1, 200, 200)
+
+#Sobel Y axis box filter algorithm
+sobely = sobel_filter_y_command(dog_image)
+add_image(sobely, 3, 2, 200, 200)
+sobely = sobel_filter_y_command(bike_image)
+add_image(sobely, 3, 3, 200, 200)
 
 #Gaussian blur filter
 cv2_Gaussian = gaussian_Filter(dog_image, 5)
