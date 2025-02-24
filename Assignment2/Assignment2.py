@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 root = tk.Tk()
 root.title("Image Adjustment Settings: ")
 root.configure(background="white")
-root.geometry("1200x750+100+20")
+root.geometry("1400x750+20+20")
 
 # Create a frame
 frame = Frame(root, bg="white")
@@ -59,11 +59,13 @@ def boxFilter(image_path, k): # Box filter algorithm
 
     return empty_matrix
 
-def box_filter_command(image_path, k): #Box filter built in function
+#Box filter built in function
+def box_filter_command(image_path, k): 
     image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     blurred_image = cv2.blur(image_cv2,(k,k))
     return blurred_image
 
+#Sobel filter using cv2 function
 def sobel_filter(image_path, k):
     image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     sobelx = cv2.Sobel(image_cv2, cv2.CV_64F, 1, 0, k)
@@ -71,6 +73,24 @@ def sobel_filter(image_path, k):
     sobelxy = cv2.magnitude(sobelx, sobely)
     return sobelxy
 
+#sobel filter manual conversion
+def sobel_filter_x_command(image_path):
+    image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    kernelx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    copy_matrix = image_cv2
+    empty_matrix = np.zeros_like(copy_matrix)
+    width, height = image_cv2.shape
+
+    #algorithm for convoluting each pixel
+    for i in range(1, width - 1):
+        for j in range(1, height - 1):
+            sub_matrix = copy_matrix[i-1:i+2, j-1:j+2] #Extracts a 3x3 matrix from the image
+            convolution = np.sum(kernelx*sub_matrix)   #Convolution of each pixel
+            empty_matrix[i][j] = convolution           #Stores the convoluted results in empty matrix
+
+    return empty_matrix
+
+#Gaussian filter using cv2 function
 def gaussian_Filter(image_path, k):
     image_cv2 = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     image_cv2 = cv2.GaussianBlur(image_cv2, (k, k), 0)
@@ -88,12 +108,19 @@ add_image(dog_image, 2, 2, 200, 200)
 add_image(cv2_blur, 2, 3, 200, 200)
 
 #cv2 sobel box filter 
-cv2_sobel = sobel_filter(bike_image, 5)
-add_image(cv2_sobel, 3, 3, 200, 200)
+cv2_sobel = sobel_filter(dog_image, 5)
+add_image(cv2_sobel, 3, 4, 200, 200)
+
+#Sobel X axis box filter algorithm
+sobelx = sobel_filter_x_command(dog_image)
+add_image(sobelx, 3, 0, 200, 200)
+sobelx = sobel_filter_x_command(bike_image)
+add_image(sobelx, 3, 1, 200, 200)
 
 #Gaussian blur filter
 cv2_Gaussian = gaussian_Filter(dog_image, 5)
-add_image(cv2_Gaussian, 3, 2, 200, 200)
+add_image(cv2_Gaussian, 4, 2, 200, 200)
 cv2_Gaussian = gaussian_Filter(dog_image, 3)
-add_image(cv2_Gaussian, 3, 1, 200, 200)
+add_image(cv2_Gaussian, 4, 1, 200, 200)
+
 root.mainloop()
