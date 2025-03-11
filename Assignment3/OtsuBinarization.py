@@ -4,22 +4,39 @@ from matplotlib import pyplot as plt
 
 sittingImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment3\Images\manSitting.png"
 standingImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment3\Images\manStanding.png"
+binaryImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment3\Images\binaryImage.png"
 
-image1 = cv.imread(sittingImage, cv.IMREAD_GRAYSCALE)
-image2 = cv.imread(standingImage, cv.IMREAD_GRAYSCALE)
+def binaryOtsu(image_paths):
+    for idx, image_path in enumerate(image_paths):     #Cycles through each listed image
+        image = cv.imread(image_path, cv.IMREAD_COLOR) #Loads the image with color
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   #Converts to grayscale for Otsu function
 
-ret1, th1 = cv.threshold(image1, 127,255, cv.THRESH_BINARY + cv.THRESH_OTSU)
-blur = cv.GaussianBlur(image1, (5,5), 0)
-ret2, th2 = cv.threshold(blur, 127,255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        _, th = cv.threshold(gray, 0,255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-images = [image1, th1, image1, th2]
-titles = ['Original Image 1', 'Otsu Threshold 1', 'Original Image 2', 'Otsu Threshold 2']
+        channel = cv.merge((th, th, th))    #Creates a holding for each RGB parameter
 
-for i in range(len(images)):
-    plt.subplot(2,2,i+1),plt.imshow(images[i],'gray')
-    plt.title(titles[i])  # Add corresponding title
-    plt.xticks([])  # Remove x-axis ticks
-    plt.yticks([])  # Remove y-axis ticks
+        combine = cv.bitwise_and(image, channel) #Overlays mask onto image
+
+        #Converts to matplotlib format RGB
+        image_rgb = cv.cvtColor(image, cv.COLOR_BGR2RGB) 
+        overlayImage = cv.cvtColor(combine, cv.COLOR_BGR2RGB)
+
+        plt.subplot(len(image_paths), 2, idx * 2 + 1)
+        plt.imshow(image_rgb)
+        plt.title(f"Original Image {idx + 1}")
+        plt.xticks([])  # Remove x-axis ticks
+        plt.yticks([])  # Remove y-axis ticks
+
+        plt.subplot(len(image_paths), 2, idx * 2 + 2)
+        plt.imshow(overlayImage)
+        plt.title(f"Overlayed Image {idx + 1}")
+        plt.xticks([]) 
+        plt.yticks([])  
+
+
+image_paths = [sittingImage, standingImage, binaryImage]
+
+binaryOtsu(image_paths)
 
 plt.show()
 
