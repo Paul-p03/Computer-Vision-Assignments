@@ -1,6 +1,10 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
+from skimage import data, io, img_as_ubyte
+from skimage.filters import threshold_multiotsu
+
+
 
 sittingImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment3\Images\manSitting.png"
 standingImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment3\Images\manStanding.png"
@@ -8,9 +12,10 @@ binaryImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assig
 
 def binaryOtsu(image_paths):
     for idx, image_path in enumerate(image_paths):     #Cycles through each listed image
+        
         image = cv.imread(image_path, cv.IMREAD_COLOR) #Loads the image with color
-        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   #Converts to grayscale for Otsu function
 
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   #Converts to grayscale for Otsu function
         _, th = cv.threshold(gray, 0,255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
         channel = cv.merge((th, th, th))    #Creates a holding for each RGB parameter
