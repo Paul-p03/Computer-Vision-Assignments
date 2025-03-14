@@ -12,15 +12,15 @@ binaryImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assig
 def binaryOtsu(image_paths):
     for idx, image_path in enumerate(image_paths):     # Cycles through each listed image
         image = cv.imread(image_path, cv.IMREAD_COLOR) # Loads the image with color
-        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   # Converts to grayscale for Otsu function
+        blur = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   # Converts to grayscale for Otsu function
 
-        blur = cv.GaussianBlur(gray, (5, 5), 0)        # Gaussian filter allows for smoother segmentation
+               # Gaussian filter allows for smoother segmentation
     
         # multi level classes
         thresholds = threshold_multiotsu(blur, classes=5)
         regions = np.digitize(blur, bins=thresholds)
         output = img_as_ubyte(regions)
-
+        #Color Thresholds
         colorMap = ListedColormap(['red', 'green', 'blue', 'yellow', 'purple'])
         colorOutput = colorMap(output / output.max())
 
@@ -34,6 +34,31 @@ def binaryOtsu(image_paths):
         # Multi class image
         plt.subplot(len(image_paths), 2, idx * 2 + 2)
         plt.imshow(colorOutput)
+        plt.title(f"Multi-Class No Gaussian {idx + 1}")
+        plt.xticks([]) 
+        plt.yticks([])
+
+
+
+def meanShift(image_paths):
+    for idx, image_path in enumerate(image_paths):
+
+        image = cv.imread(image_path, cv.IMREAD_COLOR)
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        sp = 20  
+        sr = 40  
+        # Apply mean shift filtering
+        filtered = cv.pyrMeanShiftFiltering(image, sp, sr)
+
+        # Display the original and filtered images
+        plt.subplot(len(image_paths), 2, idx * 2 + 1)
+        plt.imshow(image)
+        plt.title(f"Original Image {idx + 1}")
+        plt.xticks([]) 
+        plt.yticks([])
+
+        plt.subplot(len(image_paths), 2, idx * 2 + 2)
+        plt.imshow(filtered)
         plt.title(f"Multi-Class Segmentation {idx + 1}")
         plt.xticks([]) 
         plt.yticks([])
@@ -41,5 +66,5 @@ def binaryOtsu(image_paths):
 image_paths = [sittingImage, standingImage, binaryImage]
 
 binaryOtsu(image_paths)
-
+#meanShift(image_paths)
 plt.show()
