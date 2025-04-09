@@ -7,14 +7,27 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import os
 
-def button_click():
+def button_click(): 
     global display_label, canvas_hist1, img_copy, dogImage
-    # Save the modified img_copy back to the original file
-    dogImage = r"C:/Users/ppatu/OneDrive/Documents/Spring2025/Computer Vision/dogImage.bmp"
-    img_copy.save(dogImage)  # Save the modified image back to the original location
-    canvas_hist2.save(canvas_hist1)
-    print(f"Image saved to {dogImage}")
+    
+    # Save the modified img_copy as a new image file
+    new_image_filename = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment1\dogImage1.bmp"
+    
+    # Save the modified image to the new location
+    img_copy.save(new_image_filename)  
+    print(f"Image saved to {new_image_filename}")
+    
+    # Delete the original image
+    if os.path.exists(dogImage):
+        os.remove(dogImage)
+        print(f"Original image deleted: {dogImage}")
+    
+    os.rename(new_image_filename, dogImage)
+    print(f"New image renamed to {dogImage}")
+    
+    root.quit()  
 
 #Function that makes the direct adjustment to the image itself
 def scrollBarPos(brightness_val = 0, contrast_val = 0): #Sets both scroll bar positions to 0
@@ -80,7 +93,7 @@ left_image.pack(side=tk.LEFT)
 right_image = tk.Frame(image_frame)
 right_image.pack(side = tk.RIGHT)
 
-dogImage = r"C:\Users\ppatu\OneDrive\Documents\Spring2025\Computer Vision\dogImage.bmp"
+dogImage = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\Assignment1\dogImage.bmp"
 img = Image.open(dogImage)
 resized_img = img.resize((300, 300)) #Resizes image 
 
