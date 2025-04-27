@@ -6,9 +6,9 @@ import re
 # Setup Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-path = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\FinalProject\images\LiscensePlate.jpg"
+path = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\FinalProject\images\LiscensePlate4.jpg"
 img = cv.imread(path)
-img = cv.resize(img, (500, 500))
+img = cv.resize(img, (1000, 500))
 
 # Manual select the ROI box
 bbox = cv.selectROI("Select License Plate", img, False)
@@ -23,7 +23,7 @@ box = img[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
 
 # Preprocessing
 gray = cv.cvtColor(box, cv.COLOR_BGR2GRAY)
-gray = cv.resize(gray, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC)
+gray = cv.resize(gray, None, fx=1.2, fy=1.2, interpolation=cv.INTER_CUBIC)
 blur = cv.GaussianBlur(gray, (5,5), 0)
 ret, thresh = cv.threshold(gray, 0, 255, cv.THRESH_OTSU | cv.THRESH_BINARY_INV)
 
@@ -37,21 +37,35 @@ sorted_contours = sorted(contours, key=lambda ctr: cv.boundingRect(ctr)[0])
 
 plate_num = ""
 
+plate_h, plate_w = dilation.shape
+
+# size thresholds (tweak these until they match your plate)
+min_h, max_h = int(plate_h*0.5), int(plate_h*0.9)
+min_w, max_w = int(plate_w*0.06), int(plate_w*0.12)
+
 for cnt in sorted_contours:
     x, y, w, h = cv.boundingRect(cnt)
-    height, width = thresh.shape
 
-    if height / float(h) > 6: continue
+    # 1) absolute size filter
+    if not (min_h < h < max_h and min_w < w < max_w):
+        continue
+
+    # 2) aspect ratio filter (optional)
     ratio = h / float(w)
-    if ratio < 1.5: continue
-    if width / float(w) > 15: continue
-    area = h * w
-    if area < 100: continue
+    if ratio < 1.5 or ratio > 10:
+        continue
 
-    # Expand boundary
-    margin = 5
-    roi = thresh[max(0, y-margin):min(y+h+margin, height), 
-                 max(0, x-margin):min(x+w+margin, width)]
+    # 3) dynamic margin
+    m = int(h * 0.2)
+    x1, y1 = max(0, x - m), max(0, y - m)
+    x2 = min(plate_w, x + w + m)
+    y2 = min(plate_h, y + h + m)
+
+    # 4) draw the tightened rectangle
+    cv.rectangle(dilation, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    # ROI extraction
+    roi = thresh[y1:y2, x1:x2]
     
     roi = cv.bitwise_not(roi)
     roi = cv.medianBlur(roi, 5)
@@ -63,6 +77,7 @@ for cnt in sorted_contours:
 
 print("License Plate Number:", plate_num)
 
-cv.imshow("Cropped Plate", box)
+#cv.imshow("Cropped Plate", box)
+cv.imshow('Detected Letters', dilation)
 cv.waitKey(0)
 cv.destroyAllWindows()
