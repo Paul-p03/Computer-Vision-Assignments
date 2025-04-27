@@ -1,44 +1,68 @@
 import cv2 as cv
 import numpy as np
 import pytesseract
+import re
 
+# Setup Tesseract path
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 path = r"C:\Users\ppatu\Computer-Vision-Assignments\Computer-Vision-Assignments\FinalProject\images\LiscensePlate.jpg"
-img = cv.imread(path, cv.IMREAD_GRAYSCALE)
-img = cv.resize(img, (500,500))
-newImg = cv.medianBlur(img, 11)
+img = cv.imread(path)
+img = cv.resize(img, (500, 500))
 
-#improves the contrast of the image
-clahe = cv.createCLAHE(clipLimit=2)
-claheEnhance = np.clip(clahe.apply(newImg) + 70, 170, 255).astype(np.uint8)
+# Manual select the ROI box
+bbox = cv.selectROI("Select License Plate", img, False)
+xmin, ymin, w, h = bbox
+xmax = xmin + w
+ymax = ymin + h
+coords = [ymin, ymax, xmin, xmax]
+cv.destroyWindow("Select License Plate")
 
-#edge detection
-sobelx = cv.Sobel(claheEnhance, cv.CV_64F, 1, 0, ksize=5)
-sobely = cv.Sobel(claheEnhance, cv.CV_64F, 0, 1, ksize = 5)
+# Crop out the license plate
+box = img[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
 
-magSobel = np.sqrt(sobelx**2+sobely**2)
+# Preprocessing
+gray = cv.cvtColor(box, cv.COLOR_BGR2GRAY)
+gray = cv.resize(gray, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC)
+blur = cv.GaussianBlur(gray, (5,5), 0)
+ret, thresh = cv.threshold(gray, 0, 255, cv.THRESH_OTSU | cv.THRESH_BINARY_INV)
 
-#separates the image characters into noticable letters
-th1 = cv.adaptiveThreshold(magSobel.astype(np.uint8), 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+# Morphological operations
+rect_kern = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
+dilation = cv.dilate(thresh, rect_kern, iterations=1)
 
-#creates masked image into 16bit BGR grayscale 
-gray_16bit = cv.normalize(th1, None, 0, 65535, cv.NORM_MINMAX, cv.CV_16U)
-gray_16bit_color = cv.cvtColor(gray_16bit, cv.COLOR_GRAY2BGR)
+# Find contours
+contours, hierarchy = cv.findContours(dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+sorted_contours = sorted(contours, key=lambda ctr: cv.boundingRect(ctr)[0])
 
-#Creates original image into 16bit BGR grayscale 
-gray_16bit_original = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-gray_16bit_original_color = cv.normalize(gray_16bit_original, None, 0, 65535, cv.NORM_MINMAX, cv.CV_16U)
+plate_num = ""
 
-#Displays both two 16bit images
-together = cv.hconcat([gray_16bit_original_color, gray_16bit_color])
-cv.imshow("Image", together)
+for cnt in sorted_contours:
+    x, y, w, h = cv.boundingRect(cnt)
+    height, width = thresh.shape
 
-#OCR method needs to be tweaked
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Update this path to your Tesseract installation
-text = pytesseract.image_to_string(th1)
+    if height / float(h) > 6: continue
+    ratio = h / float(w)
+    if ratio < 1.5: continue
+    if width / float(w) > 15: continue
+    area = h * w
+    if area < 100: continue
 
-print("Extracted Text:")
-print(text)
+    # Expand boundary
+    margin = 5
+    roi = thresh[max(0, y-margin):min(y+h+margin, height), 
+                 max(0, x-margin):min(x+w+margin, width)]
+    
+    roi = cv.bitwise_not(roi)
+    roi = cv.medianBlur(roi, 5)
 
+    text = pytesseract.image_to_string(roi, config='-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 8 --oem 3')
+    clean_text = re.sub('[\W_]+', '', text)
+    plate_num += clean_text
+
+
+print("License Plate Number:", plate_num)
+
+cv.imshow("Cropped Plate", box)
 cv.waitKey(0)
 cv.destroyAllWindows()
